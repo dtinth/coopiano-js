@@ -1,0 +1,3 @@
+[submodule "coopiano"]
+	path = coopiano
+	url = https://github.com/peterc/coopiano.git

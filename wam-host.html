@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>coopiano WAM test host</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>coopiano WAM test host</h1>
+      <p>
+        Loads a <a href="https://www.webaudiomodules.com/">Web Audio Module 2</a> plugin through the
+        official SDK host functions, and sends it MIDI from the computer keyboard and Web MIDI as
+        <code>wam-midi</code> events.
+      </p>
+      <p>
+        <label>Plugin URL <input id="url" size="40" /></label>
+        <button id="load" type="button">Load</button>
+      </p>
+      <p id="status"></p>
+      <div id="gui"></div>
+    </main>
+    <script type="module" src="./src/wam-host.ts"></script>
+  </body>
+</html>

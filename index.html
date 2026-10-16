@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>coopiano</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>coopiano</h1>
+      <p>
+        <a href="https://github.com/peterc/coopiano">Peter Cooper's physically modelled piano</a>,
+        compiled to WebAssembly.
+      </p>
+      <button id="start" type="button">Start audio</button>
+      <dl id="status" hidden>
+        <dt>Audio</dt>
+        <dd id="audio-status">—</dd>
+        <dt>MIDI inputs</dt>
+        <dd id="midi-status">—</dd>
+        <dt>Keyboard</dt>
+        <dd id="keyboard-status">—</dd>
+      </dl>
+      <details>
+        <summary>Inputs</summary>
+        <ul>
+          <li><strong>Web MIDI:</strong> all connected MIDI inputs play the piano.</li>
+          <li>
+            <strong>Computer keyboard</strong> (<a
+              href="https://github.com/dtinth/WebMIDICon/blob/master/src/midi-keybindings/index.ts"
+              >WebMIDICon piano keymap</a
+            >): bottom row <kbd>Shift</kbd> <kbd>Z</kbd> <kbd>S</kbd> <kbd>X</kbd>… and top rows
+            <kbd>`</kbd> <kbd>Tab</kbd> <kbd>Q</kbd> <kbd>2</kbd> <kbd>W</kbd>….
+            <kbd>Alt</kbd> plays the top rows one octave higher. <kbd>Space</kbd> is the sustain
+            pedal. <kbd>←</kbd>/<kbd>→</kbd> transpose, <kbd>↑</kbd>/<kbd>↓</kbd> change octave,
+            <kbd>Esc</kbd>–<kbd>F12</kbd> set transpose.
+          </li>
+          <li>
+            <strong><a href="https://www.g200kg.com/en/docs/webmidilink/">WebMidiLink</a>:</strong>
+            load this page in a WebMidiLink host. It accepts <code>midi,…</code> messages through
+            <code>postMessage</code>.
+          </li>
+          <li>
+            <strong>Web Audio Module 2:</strong> load
+            <a href="./wam/index.js"><code>wam/index.js</code></a> in a WAM host, or try the
+            <a href="./wam-host.html">test host</a>.
+          </li>
+        </ul>
+      </details>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

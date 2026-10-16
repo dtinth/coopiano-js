@@ -1,0 +1,30 @@
+{
+  "name": "coopiano-js",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:wasm": "mise exec -- ./wasm/build.sh",
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview",
+    "render": "node scripts/render.ts"
+  },
+  "dependencies": {
+    "@webaudiomodules/api": "2.0.0-alpha.6",
+    "@webaudiomodules/sdk": "^0.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.11.2",
+      "onFail": "download"
+    }
+  }
+}
