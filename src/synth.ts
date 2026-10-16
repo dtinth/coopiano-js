@@ -2,6 +2,7 @@
 import processorUrl from "./worklet/processor.ts?worker&url";
 import wasmUrl from "./generated/coopiano.wasm?url";
 import { connectContactWorkers } from "./contact-workers.ts";
+import type { ParameterValues } from "./params.ts";
 import type { SchedulerStats } from "./worklet/scheduler.ts";
 
 export class Synth {
@@ -39,6 +40,10 @@ export class Synth {
 
   requestStats() {
     this.node.port.postMessage({ type: "stats" });
+  }
+
+  setParameters(values: Partial<ParameterValues>) {
+    this.node.port.postMessage({ type: "parameters", values });
   }
 
   send(data: ArrayLike<number>) {
