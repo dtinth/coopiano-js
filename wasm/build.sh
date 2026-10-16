@@ -6,5 +6,5 @@ mkdir -p src/generated
 em++ wasm/coopiano_wasm.cpp -o src/generated/coopiano.wasm \
   -std=c++17 -O3 -flto -msimd128 \
   -sSTANDALONE_WASM --no-entry \
-  -sALLOW_MEMORY_GROWTH -sINITIAL_MEMORY=64MB \
+  -sALLOW_MEMORY_GROWTH \
   -sEXPORTED_FUNCTIONS=_malloc,_free
