@@ -4,6 +4,7 @@ import { WamNode, WebAudioModule } from "@webaudiomodules/sdk";
 import processorUrl from "../worklet/wam-processor.ts?worker&url";
 import wasmUrl from "../generated/coopiano.wasm?url";
 import { WAM_MODULE_ID } from "./id.ts";
+import { connectContactWorkers } from "../contact-workers.ts";
 
 class CoopianoNode extends WamNode {
   static override async addModules(audioContext: BaseAudioContext, moduleId: string) {
@@ -55,6 +56,7 @@ export default class CoopianoWam extends WebAudioModule<WamNode> {
       processorOptions: { wasm },
     });
     await node._initialize();
+    connectContactWorkers(node, wasm);
     return node;
   }
 

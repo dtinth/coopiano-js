@@ -1,6 +1,8 @@
 // Main-thread handle for the plain coopiano AudioWorkletNode.
 import processorUrl from "./worklet/processor.ts?worker&url";
 import wasmUrl from "./generated/coopiano.wasm?url";
+import { connectContactWorkers } from "./contact-workers.ts";
+import type { SchedulerStats } from "./worklet/scheduler.ts";
 
 export class Synth {
   readonly node: AudioWorkletNode;
@@ -11,6 +13,7 @@ export class Synth {
     this.ready = new Promise((resolve) => {
       node.port.onmessage = (e) => {
         if (e.data.type === "ready") resolve();
+        if (e.data.type === "stats") this.onStats?.(e.data.stats as SchedulerStats);
       };
     });
   }
@@ -28,7 +31,14 @@ export class Synth {
     });
     const synth = new Synth(node);
     await synth.ready;
+    connectContactWorkers(node, wasm);
     return synth;
+  }
+
+  onStats?: (stats: SchedulerStats) => void;
+
+  requestStats() {
+    this.node.port.postMessage({ type: "stats" });
   }
 
   send(data: ArrayLike<number>) {

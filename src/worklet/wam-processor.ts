@@ -3,6 +3,7 @@
 // WamProcessor splits each render quantum at event times, so MIDI is sample-accurate.
 import { CoopianoCore } from "../core.ts";
 import { WAM_MODULE_ID } from "../wam/id.ts";
+import { NoteScheduler } from "./scheduler.ts";
 
 type WamProcessorBase = new (options: AudioWorkletNodeOptions) => AudioWorkletProcessor;
 const scope = globalThis as unknown as {
@@ -17,15 +18,22 @@ if (!scope.coopianoWamRegistered) {
 
   class CoopianoWamProcessor extends WamProcessor {
     private readonly core: CoopianoCore;
+    private readonly scheduler: NoteScheduler;
 
     constructor(options: AudioWorkletNodeOptions) {
       super(options);
       const { wasm } = options.processorOptions as { wasm: ArrayBuffer };
       this.core = CoopianoCore.create(new WebAssembly.Module(wasm), sampleRate);
+      this.scheduler = new NoteScheduler(this.core);
+      // WamProcessor owns the port; take the contact-worker ports before it sees them.
+      const wamOnMessage = this.port.onmessage!;
+      this.port.onmessage = (e) => {
+        if (!this.scheduler.handleNodeMessage(e.data)) wamOnMessage.call(this.port, e);
+      };
     }
 
     _onMidi(midiData: { bytes: number[] }) {
-      this.core.midi(midiData.bytes);
+      this.scheduler.midi(midiData.bytes);
     }
 
     _process(
