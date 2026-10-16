@@ -5,6 +5,7 @@
 // the note starts in the first render quantum after it arrives. Expensive contact
 // simulation never runs on the audio thread, unless no worker is connected.
 import type { CoopianoCore } from "../core.ts";
+import { curveVelocity } from "../params.ts";
 
 /** Main thread → processor, through the AudioWorkletNode's port. */
 export type ContactPortMessage = { type: "coopiano-contact-port"; port: MessagePort };
@@ -55,8 +56,9 @@ export class NoteScheduler {
     port.onmessage = (e: MessageEvent<Float64Array>) => this.install(e.data);
     this.ports.push(port);
     // Spread the prewarm requests over the workers as they connect.
+    const velocity = curveVelocity(PREWARM_VELOCITY, this.core.parameters.velocityCurve);
     for (let key = 21 + this.ports.length - 1; key <= 108; key += 4) {
-      this.request(key, PREWARM_VELOCITY, true, port);
+      this.request(key, velocity, true, port);
     }
     return true;
   }
@@ -64,7 +66,8 @@ export class NoteScheduler {
   midi(bytes: ArrayLike<number>) {
     const status = bytes[0] & 0xf0;
     const channel = bytes[0] & 0x0f;
-    if (status === 0x90 && bytes[2] > 0) this.noteOn(bytes[1], bytes[2], channel);
+    if (status === 0x90 && bytes[2] > 0)
+      this.noteOn(bytes[1], curveVelocity(bytes[2], this.core.parameters.velocityCurve), channel);
     else if (status === 0x80 || status === 0x90) this.noteOff(bytes[1], channel);
     else if (status === 0xb0) {
       if (bytes[1] === 64) this.core.pedal(channel, bytes[2] / 127);

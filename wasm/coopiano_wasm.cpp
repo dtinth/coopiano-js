@@ -3,6 +3,7 @@
 #include "../coopiano/instrument.hpp"
 #include "../coopiano/piano_host.hpp"
 #include "contact_cache.hpp"
+#include "live_params.hpp"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -100,6 +101,14 @@ EXPORT int coopiano_note_off(Instance* p, int key, int channel) {
 EXPORT int coopiano_pedal(Instance* p, int channel, double position) {
     if (channel < 0 || channel > 15) return 0;
     return p->engine.pedal(channel, std::clamp(position, 0.0, 1.0));
+}
+
+// Output volume in dB, relative to coopiano's default gain.
+EXPORT void coopiano_set_volume(Instance* p, double volume_db) { live_params::set_volume(p->engine, volume_db); }
+
+// Room reverb: mix 0..1 (0 = off), decay 0.2..4 s, damping 500..12000 Hz (lower is darker).
+EXPORT void coopiano_set_reverb(Instance* p, double mix, double decay_seconds, double damping_hz) {
+    live_params::set_reverb(p->engine, mix, decay_seconds, damping_hz);
 }
 
 // Silences all voices and effect tails at once.

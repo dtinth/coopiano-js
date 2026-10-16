@@ -1,9 +1,13 @@
 // AudioWorklet processor for the standalone app and the WebMidiLink page.
 // The main thread posts raw MIDI messages; they apply at the next render quantum.
 import { CoopianoCore } from "../core.ts";
+import { PARAMETER_IDS, type ParameterValues } from "../params.ts";
 import { NoteScheduler } from "./scheduler.ts";
 
-export type CoopianoProcessorMessage = { type: "midi"; data: number[] } | { type: "stats" };
+export type CoopianoProcessorMessage =
+  | { type: "midi"; data: number[] }
+  | { type: "parameters"; values: Partial<ParameterValues> }
+  | { type: "stats" };
 
 class CoopianoProcessor extends AudioWorkletProcessor {
   private readonly core: CoopianoCore;
@@ -18,7 +22,13 @@ class CoopianoProcessor extends AudioWorkletProcessor {
     this.port.onmessage = (e: MessageEvent<CoopianoProcessorMessage>) => {
       if (this.scheduler.handleNodeMessage(e.data)) return;
       if (e.data.type === "midi") this.queue.push(e.data.data);
-      else if (e.data.type === "stats")
+      else if (e.data.type === "parameters") {
+        for (const id of PARAMETER_IDS) {
+          const value = e.data.values[id];
+          if (typeof value === "number" && Number.isFinite(value))
+            this.core.setParameter(id, value);
+        }
+      } else if (e.data.type === "stats")
         this.port.postMessage({ type: "stats", stats: this.scheduler.stats });
     };
     this.port.postMessage({ type: "ready", latencySamples: this.core.latencySamples });

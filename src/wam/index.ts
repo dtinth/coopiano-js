@@ -5,6 +5,8 @@ import processorUrl from "../worklet/wam-processor.ts?worker&url";
 import wasmUrl from "../generated/coopiano.wasm?url";
 import { WAM_MODULE_ID } from "./id.ts";
 import { connectContactWorkers } from "../contact-workers.ts";
+import { CONTROLS_CSS, createControls } from "../controls.ts";
+import { PARAMETER_IDS, defaultParameterValues } from "../params.ts";
 
 class CoopianoNode extends WamNode {
   static override async addModules(audioContext: BaseAudioContext, moduleId: string) {
@@ -61,10 +63,23 @@ export default class CoopianoWam extends WebAudioModule<WamNode> {
   }
 
   async createGui() {
+    const node = this.audioNode;
+    const values = defaultParameterValues();
+    const current = await node.getParameterValues(false);
+    for (const id of PARAMETER_IDS) if (current[id]) values[id] = current[id].value;
+    const controls = createControls(values, (id, value) => {
+      void node.setParameterValues({ [id]: { id, value, normalized: false } });
+    });
     const div = document.createElement("div");
     div.style.cssText =
-      "padding:12px 16px;font:14px system-ui,sans-serif;background:#222;color:#eee;border-radius:6px;width:240px";
-    div.innerHTML = "<strong>coopiano</strong><br>Physically modelled piano. Send it MIDI.";
+      "padding:12px 16px;font:14px system-ui,sans-serif;background:#222;color:#eee;border-radius:6px;width:320px";
+    const style = document.createElement("style");
+    style.textContent = CONTROLS_CSS;
+    const title = document.createElement("div");
+    title.innerHTML =
+      '<strong>coopiano</strong> · <a href="https://github.com/dtinth/coopiano-js" target="_blank" style="color:#9cf">source</a>';
+    title.style.marginBottom = "8px";
+    div.append(style, title, controls.element);
     return div;
   }
 }

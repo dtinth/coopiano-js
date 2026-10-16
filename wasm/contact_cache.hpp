@@ -11,28 +11,16 @@
 // result is sent to the audio thread as a small array of doubles (1-10 KB).
 //
 // coopiano does not expose these fields, and its source stays unchanged, so this file
-// reads them through explicit template instantiation, which is exempt from access
-// checks ([temp.explicit]/12 in C++17).
+// reads them through access.hpp.
 #ifndef COOPIANO_CONTACT_CACHE_HPP
 #define COOPIANO_CONTACT_CACHE_HPP
 #include "../coopiano/instrument.hpp"
+#include "access.hpp"
 #include <array>
 #include <memory>
 #include <vector>
 
-namespace contact_cache {
-namespace access {
-template <typename Tag, typename Tag::type Member>
-struct Rob {
-    friend typename Tag::type get(Tag) { return Member; }
-};
-#define COOPIANO_ROB(Name, Type, Member)                         \
-    struct Name {                                                \
-        using type = Type;                                       \
-        friend type get(Name);                                   \
-    };                                                           \
-    template struct Rob<Name, Member>;
-
+namespace coopiano_access {
 using Doubles3 = std::array<std::vector<double>, 3>;
 COOPIANO_ROB(ResponseKey, piano::Key piano::ContactResponse::*, &piano::ContactResponse::key_)
 COOPIANO_ROB(ResponseVelocity, double piano::ContactResponse::*, &piano::ContactResponse::velocity_)
@@ -43,8 +31,9 @@ COOPIANO_ROB(ResponseQd, Doubles3 piano::ContactResponse::*, &piano::ContactResp
 COOPIANO_ROB(EngineStartNote,
              bool (instrument::Engine::*)(const piano::PreparedNote&, int, int) noexcept,
              &instrument::Engine::start_note)
-#undef COOPIANO_ROB
-} // namespace access
+} // namespace coopiano_access
+
+namespace contact_cache {
 
 constexpr int FIRST_KEY = 21, LAST_KEY = 108, KEYS = LAST_KEY - FIRST_KEY + 1;
 constexpr double FORMAT = 1;
@@ -56,10 +45,10 @@ inline double normalized_velocity(int velocity) { return std::clamp(velocity / 1
 //   FORMAT, key, midi velocity, duration_ms, peak_force, status, string count,
 //   then for each string: n_force, n_q, n_qd, force..., q..., qd...
 inline void serialize(const piano::ContactResponse& r, int key, int velocity, std::vector<double>& out) {
-    const auto& contact = r.*get(access::ResponseContact{});
-    const auto& force = r.*get(access::ResponseForce{});
-    const auto& q = r.*get(access::ResponseQ{});
-    const auto& qd = r.*get(access::ResponseQd{});
+    const auto& contact = r.*get(coopiano_access::ResponseContact{});
+    const auto& force = r.*get(coopiano_access::ResponseForce{});
+    const auto& q = r.*get(coopiano_access::ResponseQ{});
+    const auto& qd = r.*get(coopiano_access::ResponseQd{});
     size_t strings = 0;
     while (strings < 3 && !q[strings].empty()) ++strings;
     out.clear();
@@ -106,15 +95,15 @@ public:
         const piano::Key& k = keys_[size_t(key - FIRST_KEY)];
         if (strings != piano::detail::KeyAccess::strings(k).size()) return false;
         auto r = std::make_unique<piano::ContactResponse>(keys_.back(), 1.0);
-        (*r).*get(access::ResponseKey{}) = k;
-        (*r).*get(access::ResponseVelocity{}) = normalized_velocity(velocity);
-        auto& contact = (*r).*get(access::ResponseContact{});
+        (*r).*get(coopiano_access::ResponseKey{}) = k;
+        (*r).*get(coopiano_access::ResponseVelocity{}) = normalized_velocity(velocity);
+        auto& contact = (*r).*get(coopiano_access::ResponseContact{});
         contact.duration_ms = data[3];
         contact.peak_force = data[4];
         contact.status = piano::ContactStatus(int(data[5]));
-        auto& force = (*r).*get(access::ResponseForce{});
-        auto& q = (*r).*get(access::ResponseQ{});
-        auto& qd = (*r).*get(access::ResponseQd{});
+        auto& force = (*r).*get(coopiano_access::ResponseForce{});
+        auto& q = (*r).*get(coopiano_access::ResponseQ{});
+        auto& qd = (*r).*get(coopiano_access::ResponseQd{});
         size_t at = 7;
         for (size_t s = 0; s < 3; ++s) {
             force[s].clear(), q[s].clear(), qd[s].clear();
@@ -142,7 +131,7 @@ public:
         if (!has(key, velocity)) return false;
         auto& workspace = *workspaces_[size_t(key - FIRST_KEY)];
         if (!workspace.prepare(*responses_[index(key, velocity)], seed)) return false;
-        return (engine.*get(access::EngineStartNote{}))(workspace.note(), midi_key, channel);
+        return (engine.*get(coopiano_access::EngineStartNote{}))(workspace.note(), midi_key, channel);
     }
 };
 

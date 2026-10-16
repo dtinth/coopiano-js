@@ -1,5 +1,6 @@
 // Thin wrappers around coopiano.wasm. They run anywhere WebAssembly runs,
 // including AudioWorkletGlobalScope and Workers (no fetch, no DOM, no Emscripten glue).
+import { defaultParameterValues, type ParameterId, type ParameterValues } from "./params.ts";
 
 interface Exports {
   memory: WebAssembly.Memory;
@@ -13,6 +14,8 @@ interface Exports {
   coopiano_note_on_cached(p: number, key: number, velocity: number, channel: number): number;
   coopiano_note_off(p: number, key: number, channel: number): number;
   coopiano_pedal(p: number, channel: number, position: number): number;
+  coopiano_set_volume(p: number, volumeDb: number): void;
+  coopiano_set_reverb(p: number, mix: number, decaySeconds: number, dampingHz: number): void;
   coopiano_reset(p: number): void;
   coopiano_process(p: number, frames: number): number;
   coopiano_contact_key(key: number): number;
@@ -44,6 +47,7 @@ export class CoopianoCore {
   private readonly p: number;
   private left!: Float32Array;
   private right!: Float32Array;
+  private readonly values = defaultParameterValues();
 
   private constructor(x: Exports, p: number) {
     this.x = x;
@@ -109,6 +113,20 @@ export class CoopianoCore {
     return this.x.coopiano_install_contact(this.p) !== 0;
   }
 
+  get parameters(): Readonly<ParameterValues> {
+    return this.values;
+  }
+
+  /** No allocation, and cheap when nothing changes, so it can run for every render quantum. */
+  setParameter(id: ParameterId, value: number) {
+    const v = this.values;
+    if (v[id] === value) return;
+    v[id] = value;
+    if (id === "volume") this.x.coopiano_set_volume(this.p, v.volume);
+    else if (id === "reverbMix" || id === "reverbDecay" || id === "reverbDamping")
+      this.x.coopiano_set_reverb(this.p, v.reverbMix, v.reverbDecay, v.reverbDamping);
+  }
+
   /** Silences all voices and effect tails at once. */
   reset() {
     this.x.coopiano_reset(this.p);
@@ -124,6 +142,15 @@ export class CoopianoCore {
     }
     outL.set(this.left.subarray(0, frames), offset);
     outR?.set(this.right.subarray(0, frames), offset);
+    const width = this.values.stereoWidth;
+    if (outR && width !== 1) {
+      for (let i = offset; i < offset + frames; i++) {
+        const mid = (outL[i] + outR[i]) / 2;
+        const side = ((outL[i] - outR[i]) / 2) * width;
+        outL[i] = mid + side;
+        outR[i] = mid - side;
+      }
+    }
   }
 
   destroy() {
