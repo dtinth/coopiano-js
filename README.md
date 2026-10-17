@@ -8,7 +8,7 @@ It runs in the browser in three ways:
 
 - **Standalone web app** (`index.html`). Plays from Web MIDI inputs and from the computer keyboard, with the [WebMIDICon piano keymap](https://github.com/dtinth/WebMIDICon/blob/master/src/midi-keybindings/index.ts).
 - **[WebMidiLink](https://www.g200kg.com/en/docs/webmidilink/) synth** (the same `index.html`). Accepts Level 0 `midi,…` messages through `postMessage`.
-- **[Web Audio Module 2](https://www.webaudiomodules.com/) instrument** (`wam/index.js`). Load https://dtinth.github.io/coopiano-js/wam/index.js in a WAM host. [`wam-host.html`](https://dtinth.github.io/coopiano-js/wam-host.html) is a minimal test host.
+- **[Web Audio Module 2](https://www.webaudiomodules.com/) instrument** (`wam/index.js`). Load https://dtinth.github.io/coopiano-js/wam/index.js in a WAM host. [`wam-host.html`](https://dtinth.github.io/coopiano-js/wam-host.html) is a minimal test host. Demo: [play a MIDI file through coopiano in Patchies](https://patchies.app/?id=j4tbm40x69olw39) (drag a MIDI file in).
 
 Status: spike. See [#1](https://github.com/dtinth/coopiano-js/issues/1).
 
